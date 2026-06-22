@@ -183,6 +183,20 @@ low, medium, high
 
 If the Hugging Face API request fails, the application uses fallback keyword logic so comments can still be analyzed during testing.
 
+## Frontend
+
+PulseDesk includes a simple frontend served directly by Spring Boot.
+
+The frontend has two pages:
+
+- `index.html` - main page for submitting user comments
+- `dashboard.html` - dashboard page for viewing submitted comments and created tickets
+
+When the application is running, open:
+
+```text
+http://localhost:8080
+
 ## Project Structure
 
 ```text
