@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PulseDesk</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+            color: #222;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 130px;
+            padding: 12px;
+            font-size: 15px;
+            box-sizing: border-box;
+            resize: none;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+
+        button, .link-button {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        button:hover, .link-button:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary {
+            background: #111827;
+            margin-left: 8px;
+        }
+
+        .secondary:hover {
+            background: #374151;
+        }
+
+        .message {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #166534;
+        }
+
+        .error {
+            color: #b91c1c;
+        }
+
+        .examples {
+            margin-top: 15px;
+        }
+
+        .example-button {
+            background: #e5e7eb;
+            color: #111827;
+            margin-right: 6px;
+            margin-top: 6px;
+        }
+
+        .example-button:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>PulseDesk</h1>
+        <p class="subtitle">Submit customer comments and let AI decide whether they should become support tickets.</p>
+
+        <a class="link-button secondary" href="/dashboard.html">View Comments & Tickets</a>
+    </div>
+
+    <div class="card">
+        <h2>Submit a Comment</h2>
+
+        <textarea id="commentText" placeholder="Example: The app crashes every time I upload a PDF file."></textarea>
+
+        <br>
+
+        <button onclick="submitComment()">Submit Comment</button>
+
+        <div class="examples">
+            <button class="example-button" onclick="fillExample('The app crashes every time I upload a PDF file.')">Bug example</button>
+            <button class="example-button" onclick="fillExample('I was charged twice this month and need a refund.')">Billing example</button>
+            <button class="example-button" onclick="fillExample('I cannot log into my account after changing my password.')">Account example</button>
+            <button class="example-button" onclick="fillExample('The new dashboard looks amazing. Great job!')">Compliment example</button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+</div>
+
+<script>
+    function fillExample(text) {
+        document.getElementById("commentText").value = text;
+    }
+
+    async function submitComment() {
+        const textArea = document.getElementById("commentText");
+        const message = document.getElementById("message");
+        const text = textArea.value.trim();
+
+        message.textContent = "";
+        message.className = "message";
+
+        if (!text) {
+            message.textContent = "Please enter a comment.";
+            message.classList.add("error");
+            return;
+        }
+
+        try {
+            const response = await fetch("/comments", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text: text })
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to submit comment.");
+            }
+
+            const comment = await response.json();
+
+            if (comment.ticketCreated) {
+                message.textContent = "Comment submitted. A support ticket was created.";
+            } else {
+                message.textContent = "Comment submitted. No ticket was needed.";
+            }
+
+            message.classList.add("success");
+            textArea.value = "";
+
+        } catch (error) {
+            message.textContent = error.message;
+            message.classList.add("error");
+        }
+    }
+</script>
+</body>
+</html>

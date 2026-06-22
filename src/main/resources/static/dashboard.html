@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PulseDesk Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        button, .link-button {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        button:hover, .link-button:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary {
+            background: #111827;
+            margin-right: 8px;
+        }
+
+        .secondary:hover {
+            background: #374151;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        .item {
+            border-top: 1px solid #e5e7eb;
+            padding: 14px 0;
+        }
+
+        .item:first-child {
+            border-top: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            background: #e5e7eb;
+        }
+
+        .true {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .false {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .small {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .error {
+            color: #b91c1c;
+        }
+
+        @media (max-width: 850px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>PulseDesk Dashboard</h1>
+        <p class="subtitle">View submitted comments and AI-created support tickets.</p>
+
+        <a class="link-button secondary" href="/index.html">Back to Submit Page</a>
+
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Comments</h2>
+            <div id="commentsList">
+                <p class="small">Loading comments...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Tickets</h2>
+            <div id="ticketsList">
+                <p class="small">Loading tickets...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadComments() {
+        const commentsList = document.getElementById("commentsList");
+
+        try {
+            const response = await fetch("/comments");
+
+            if (!response.ok) {
+                throw new Error("Failed to load comments.");
+            }
+
+            const comments = await response.json();
+
+            if (comments.length === 0) {
+                commentsList.innerHTML = '<p class="small">No comments yet.</p>';
+                return;
+            }
+
+            commentsList.innerHTML = comments.map(comment => `
+                <div class="item">
+                    <div>
+                        <span class="badge">ID: ${comment.id}</span>
+                        <span class="badge ${comment.ticketCreated ? "true" : "false"}">
+                            Ticket: ${comment.ticketCreated ? "Yes" : "No"}
+                        </span>
+                    </div>
+                    <p>${escapeHtml(comment.text)}</p>
+                    <p class="small">Created: ${formatDateTime(comment.createdAt)}</p>
+                </div>
+            `).join("");
+
+        } catch (error) {
+            commentsList.innerHTML = `<p class="error">${error.message}</p>`;
+        }
+    }
+
+    async function loadTickets() {
+        const ticketsList = document.getElementById("ticketsList");
+
+        try {
+            const response = await fetch("/tickets");
+
+            if (!response.ok) {
+                throw new Error("Failed to load tickets.");
+            }
+
+            const tickets = await response.json();
+
+            if (tickets.length === 0) {
+                ticketsList.innerHTML = '<p class="small">No tickets yet.</p>';
+                return;
+            }
+
+            ticketsList.innerHTML = tickets.map(ticket => `
+                <div class="item">
+                    <div>
+                        <span class="badge">ID: ${ticket.id}</span>
+                        <span class="badge">Category: ${escapeHtml(ticket.category)}</span>
+                        <span class="badge">Priority: ${escapeHtml(ticket.priority)}</span>
+                    </div>
+                    <h3>${escapeHtml(ticket.title)}</h3>
+                    <p>${escapeHtml(ticket.summary)}</p>
+                    <p class="small">Created: ${formatDateTime(ticket.createdAt)}</p>
+                </div>
+            `).join("");
+
+        } catch (error) {
+            ticketsList.innerHTML = `<p class="error">${error.message}</p>`;
+        }
+    }
+
+    function formatDateTime(value) {
+    if (!value) {
+        return "N/A";
+    }
+
+    const date = new Date(value);
+
+    if (isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    loadComments();
+    loadTickets();
+</script>
+</body>
+</html>
